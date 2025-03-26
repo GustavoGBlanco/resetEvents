@@ -1,4 +1,4 @@
-# Módulo 5: `AutoResetEvent` y `ManualResetEvent` en C#
+# Módulo 6: `AutoResetEvent` y `ManualResetEvent` en C#
 
 ## ⚠️ ¿Qué son `AutoResetEvent` y `ManualResetEvent`?
 Son mecanismos de **señalización entre hilos** que permiten que un hilo "espere" hasta que otro lo despierte.
@@ -108,5 +108,3 @@ semaforo.Set(); // Luego el otro
 | ✅ Siempre seteá en `false` al crearlo para iniciar en "espera" | Comportamiento predecible |
 
 ---
-
-✅ Este fue el Módulo 5. El siguiente cubrirá `Barrier`, para coordinación grupal entre hilos.
