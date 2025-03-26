@@ -1,191 +1,155 @@
+
 using System;
 using System.Threading;
 
-// 🔄 Sincronización entre hilos donde un hilo espera a que otro le dé paso
-public static class SincronizacionSimple
+public static class ResetEventsExamples
 {
     private static AutoResetEvent _evento = new(false);
+    private static AutoResetEvent _evento1 = new(false);
+    private static AutoResetEvent _evento2 = new(false);
+    private static ManualResetEvent _manualGrupo = new(false);
+    private static ManualResetEvent _inicio = new(false);
+    private static AutoResetEvent _datoDisponible = new(false);
+    private static int _dato;
+    private static ManualResetEvent _eventoReset = new(false);
+    private static ManualResetEventSlim _eventoSlim = new(false);
+    private static AutoResetEvent _turno1 = new(true);
+    private static AutoResetEvent _turno2 = new(false);
+    private static ManualResetEvent _finalizado = new(false);
 
     public static void EsperarSenal()
     {
-        Console.WriteLine("[Hilo] Esperando señal...");
+        Console.WriteLine("Esperando señal...");
         _evento.WaitOne();
-        Console.WriteLine("[Hilo] Señal recibida, continuando ejecución.");
+        Console.WriteLine("¡Señal recibida!");
     }
 
     public static void EnviarSenal()
     {
+        Thread.Sleep(500);
+        Console.WriteLine("Enviando señal.");
         _evento.Set();
     }
-}
 
-// 🧭 Secuencia controlada entre partes que deben ejecutarse en orden
-public static class FlujoSecuencial
-{
-    private static AutoResetEvent _paso1 = new(false);
-    private static AutoResetEvent _paso2 = new(false);
-
-    public static void EjecutarPaso1()
+    public static void Parte1()
     {
-        Console.WriteLine("Paso 1 ejecutado");
-        _paso1.Set();
+        Console.WriteLine("Parte 1 ejecutada");
+        _evento1.Set();
     }
 
-    public static void EjecutarPaso2()
+    public static void Parte2()
     {
-        _paso1.WaitOne();
-        Console.WriteLine("Paso 2 ejecutado");
-        _paso2.Set();
+        _evento1.WaitOne();
+        Console.WriteLine("Parte 2 ejecutada");
+        _evento2.Set();
     }
 
-    public static void EjecutarPaso3()
+    public static void Parte3()
     {
-        _paso2.WaitOne();
-        Console.WriteLine("Paso 3 ejecutado");
+        _evento2.WaitOne();
+        Console.WriteLine("Parte 3 ejecutada");
     }
-}
 
-// 🎯 Escenario donde múltiples consumidores esperan pero solo uno es atendido por vez
-public static class EsperaIndividual
-{
-    private static AutoResetEvent _evento = new(false);
-
-    public static void Esperar(string nombre)
+    public static void HiloEsperador(string nombre)
     {
-        Console.WriteLine($"[{nombre}] esperando señal...");
+        Console.WriteLine($"{nombre} esperando señal...");
         _evento.WaitOne();
-        Console.WriteLine($"[{nombre}] recibió la señal.");
+        Console.WriteLine($"{nombre} recibió la señal.");
     }
 
-    public static void SeñalIndividual()
+    public static void Señalar()
     {
+        Console.WriteLine("Enviando señal.");
         _evento.Set();
     }
-}
 
-// 🚀 Liberación de múltiples tareas en espera tras cumplirse una condición común
-public static class LiberacionGlobal
-{
-    private static ManualResetEvent _evento = new(false);
-
-    public static void Esperar(string nombre)
+    public static void EsperarGrupo(string nombre)
     {
-        Console.WriteLine($"[{nombre}] esperando...");
-        _evento.WaitOne();
-        Console.WriteLine($"[{nombre}] liberado.");
+        Console.WriteLine($"{nombre} esperando...");
+        _manualGrupo.WaitOne();
+        Console.WriteLine($"{nombre} desbloqueado.");
     }
 
-    public static void LiberarTodos()
+    public static void DesbloquearGrupo()
     {
-        _evento.Set();
+        Thread.Sleep(500);
+        Console.WriteLine("Liberando todos.");
+        _manualGrupo.Set();
     }
-}
-
-// 🏁 Coordinador de múltiples hilos que deben comenzar al mismo tiempo
-public static class SincronizadorDeInicio
-{
-    private static ManualResetEvent _inicio = new(false);
 
     public static void Trabajador(string nombre)
     {
-        Console.WriteLine($"[{nombre}] listo para comenzar.");
+        Console.WriteLine($"{nombre} listo.");
         _inicio.WaitOne();
-        Console.WriteLine($"[{nombre}] trabajando.");
+        Console.WriteLine($"{nombre} empezó a trabajar.");
     }
 
     public static void IniciarTodos()
     {
+        Thread.Sleep(300);
+        Console.WriteLine("¡Inicio global!");
         _inicio.Set();
     }
-}
-
-// 📦 Patrón clásico de productor-consumidor con señal de disponibilidad
-public static class ConsumidorEsperandoDato
-{
-    private static AutoResetEvent _datoDisponible = new(false);
-    private static int _dato;
 
     public static void Consumidor()
     {
         Console.WriteLine("Esperando dato...");
         _datoDisponible.WaitOne();
-        Console.WriteLine("Dato recibido: " + _dato);
+        Console.WriteLine($"Dato recibido: {_dato}");
     }
 
     public static void Productor()
     {
+        Thread.Sleep(300);
         _dato = 42;
+        Console.WriteLine("Dato producido.");
         _datoDisponible.Set();
     }
-}
 
-// 🔁 Liberación y reinicio de evento en ciclos sucesivos controlados
-public static class CicloDeResetManual
-{
-    private static ManualResetEvent _evento = new(false);
-
-    public static void EsperarCiclo()
+    public static void Esperar()
     {
-        Console.WriteLine("Esperando evento...");
-        _evento.WaitOne();
-        Console.WriteLine("Evento recibido");
+        Console.WriteLine("Esperando...");
+        _eventoReset.WaitOne();
+        Console.WriteLine("Desbloqueado.");
     }
 
     public static void LiberarYResetear()
     {
-        _evento.Set();
+        _eventoReset.Set();
         Thread.Sleep(100);
-        _evento.Reset();
+        _eventoReset.Reset();
     }
-}
-
-// 🧪 Variante ligera para escenarios de sincronización donde no se necesita entre procesos
-public static class SincronizadorSlim
-{
-    private static ManualResetEventSlim _evento = new(false);
 
     public static void EsperarSlim()
     {
-        _evento.Wait();
-        Console.WriteLine("Desbloqueado con Slim");
+        _eventoSlim.Wait();
+        Console.WriteLine("Liberado por Slim.");
     }
 
     public static void SeñalarSlim()
     {
-        _evento.Set();
+        Thread.Sleep(200);
+        _eventoSlim.Set();
     }
-}
 
-// 🔁 Dos tareas que deben ejecutarse en estricto orden alternado
-public static class TurnoAlternado
-{
-    private static AutoResetEvent _turno1 = new(true);
-    private static AutoResetEvent _turno2 = new(false);
-
-    public static void EjecutarHilo1()
+    public static void HiloA()
     {
         _turno1.WaitOne();
-        Console.WriteLine("[Hilo1] Ejecutando turno");
+        Console.WriteLine("Hilo A ejecutando.");
         _turno2.Set();
     }
 
-    public static void EjecutarHilo2()
+    public static void HiloB()
     {
         _turno2.WaitOne();
-        Console.WriteLine("[Hilo2] Ejecutando turno");
+        Console.WriteLine("Hilo B ejecutando.");
         _turno1.Set();
     }
-}
-
-// 📢 Señalización de fin de tarea para hilos observadores
-public static class DetectorDeFinalizacion
-{
-    private static ManualResetEvent _finalizado = new(false);
 
     public static void Procesar()
     {
         Console.WriteLine("Procesando...");
-        Thread.Sleep(1000);
+        Thread.Sleep(800);
         _finalizado.Set();
     }
 
